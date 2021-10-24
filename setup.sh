@@ -1,5 +1,5 @@
 apt-get update -y
-apt install chromium-chromedriver -y
+apt-get install chromium-chromedriver
 mkdir -p ~/.streamlit/
 echo "\
 [theme]\n\
