@@ -3,7 +3,7 @@ apt install -y chromium-driver
 mkdir -p ~/.streamlit/
 echo "\
 [theme]\n\
-base="light"\n\
+base=\"light\"\n\
 primaryColor=\"#20beff\"\n\
 [server]\n\
 headless = true\n\
