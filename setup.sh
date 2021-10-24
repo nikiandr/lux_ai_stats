@@ -1,5 +1,6 @@
 apt-get update -y
 apt-get install chromium-chromedriver
+apt-get install python-selenium python3-selenium
 mkdir -p ~/.streamlit/
 echo "\
 [theme]\n\
