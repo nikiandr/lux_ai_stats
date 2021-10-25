@@ -14,7 +14,7 @@ st.set_page_config(page_title='Lux AI stats',
 st.title('Lux AI submission statistics')
 col1, col2 = st.columns(2)
 
-sub_id = col1.number_input('Submission ID', value=23380527, step=1, key='sub_id')
+sub_id = col1.number_input('Submission ID', value=23032370, step=1, key='sub_id')
 
 if col2.button('Get stats', key='run'):
     with st.spinner('Wait for it...'):
@@ -71,7 +71,8 @@ if col2.button('Get stats', key='run'):
             name=f'top score {np.max(scores)}'
         ))
         fig.update_layout(
-            showlegend=True, 
+            showlegend=True,
+            xaxis_title='Match number',
             margin=dict(l=0, r=0, b=0, t=0))
         fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
         fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr)
@@ -126,6 +127,7 @@ if col2.button('Get stats', key='run'):
         ))
         fig.update_layout(
             showlegend=True,
+            xaxis_title='Match number',
             margin=dict(l=0, r=0, b=0, t=0))
         fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
         fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor=gray_color_tr)
@@ -167,6 +169,7 @@ if col2.button('Get stats', key='run'):
         ))
         fig.update_layout(
             showlegend=True, 
+            xaxis_title='Match number',
             margin=dict(l=0, r=0, b=0, t=0))
         fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
         fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor='black')
@@ -187,7 +190,8 @@ if col2.button('Get stats', key='run'):
             line={'color':'lightsalmon'}
         ))
         fig.update_layout(
-            showlegend=True, 
+            showlegend=True,
+            xaxis_title='Match number',
             margin=dict(l=0, r=0, b=0, t=0))
         fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
         fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor=gray_color_tr)
