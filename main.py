@@ -3,9 +3,8 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import numpy as np
 import time
-import matplotlib.pyplot as plt
-plt.style.use('seaborn-whitegrid')
-
+import plotly.graph_objs as go
+import plotly.express as px
 
 def getSoup(sub_id):
     options = webdriver.ChromeOptions()
@@ -40,6 +39,7 @@ def getStats(soup):
     outcomes = []
     scores = []
     scores_delta = []
+    hover_text = []
     
     text_select = []
     team_names = []
@@ -53,9 +53,11 @@ def getStats(soup):
                 team_name = ' '.join(part_split[1:-2])
                 team_names.append(team_name)
                 
-    team_name = max(set(team_names), key = team_names.count)
+    team_name = max(set(team_names), key=team_names.count)
     
     for text in text_select:
+        if 'Validation' not in text:
+            hover_text.append(text.replace(' vs ', '<br>'))
         for part in text.split(' vs '):
             if team_name in part:
                 result = part.split(' ')
@@ -75,8 +77,9 @@ def getStats(soup):
     scores = np.array(scores[::-1])
     outcomes = np.array(outcomes[::-1])
     scores_delta = np.array(scores_delta[::-1])
-        
-    return team_name, scores, outcomes, scores_delta
+    hover_text = np.array(hover_text[::-1])
+
+    return team_name, scores, outcomes, scores_delta, hover_text
 
 st.set_page_config(page_title='Lux AI stats', 
                    page_icon='🤖',
@@ -93,7 +96,7 @@ sub_id = col1.number_input('Submission ID', value=23380527, step=1, key='sub_id'
 if col2.button('Get stats', key='run'):
     with st.spinner('Wait for it...'):
         soup = getSoup(sub_id)
-        team_name, scores, outcomes, scores_delta = getStats(soup)
+        team_name, scores, outcomes, scores_delta, hover_text = getStats(soup)
 
     info_cols = st.columns(3)
     info_cols[0].subheader(team_name)
@@ -101,40 +104,133 @@ if col2.button('Get stats', key='run'):
     info_cols[2].subheader(f'Current win rate: {np.mean(outcomes):.3f}')
 
     plot_cols = st.columns(2)
-    figsize = (9, 5)
+    layout = go.Layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    gray_color = 'rgba(49,51,63,1)'
+    gray_color_tr = 'rgba(49,51,63,0.5)'
 
-    plot_cols[0].write('Score growth plot')
-    fig, ax = plt.subplots(figsize=figsize)
-    ax.plot(scores, label='scores')
-    ax.hlines(np.mean(scores), 0, len(scores), color='tab:orange', label=f'mean score {np.mean(scores):.2f}')
-    ax.hlines(np.median(scores), 0, len(scores), color='tab:olive', label=f'median score {np.median(scores):.0f}')
+    plot_cols[0].write('#### Score growth plot')
+    
+    fig = go.Figure(layout=layout)
+    fig.add_trace(go.Scatter(
+        x=np.arange(1, len(scores)+1), y=scores,
+        name='scores'
+    ))
+    fig.add_trace(go.Scatter(
+        mode='lines',
+        x=[1, len(scores)+1], y=[np.mean(scores)] * 2,
+        name=f'mean score {np.mean(scores):.2f}',
+        line={'color':'lightsalmon'}
+    ))
+    fig.add_trace(go.Scatter(
+        mode='lines',
+        x=[1, len(scores)+1], y=[np.median(scores)] * 2,
+        name=f'median score {np.median(scores):.2f}',
+        line={'color':'lightseagreen'}
+    ))
+    fig.add_trace(go.Scatter(
+        mode='markers',
+        x=[np.argmax(scores)+1], y=[np.max(scores)],
+        marker_symbol='circle', marker_size=10, marker_color='palegreen',
+        name=f'top score {np.max(scores)}'
+    ))
+    fig.update_layout(
+        showlegend=True, 
+        margin=dict(l=0, r=0, b=0, t=0))
+    fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
+    fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr)
 
-    ax.scatter(np.argmax(scores), np.max(scores), color='tab:green', label=f'top score {np.max(scores)}')
-    ax.legend()
-    plot_cols[0].pyplot(fig)
+    plot_cols[0].plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    plot_cols[0].write('Score changes (delta) plot')
-    fig, ax = plt.subplots(figsize=figsize)
-    ax.plot(scores_delta)
-    ax.scatter(np.argwhere(scores_delta > 0), scores_delta[scores_delta > 0], c='tab:green', label='Positive')
-    ax.scatter(np.argwhere(scores_delta < 0), scores_delta[scores_delta < 0], c='tab:red', label='Negative')
-    ax.hlines(0, 0, len(scores_delta), color='black', linestyles='--')
-    ax.legend()
-    plot_cols[0].pyplot(fig)
 
-    plot_cols[1].write(f'Win/Loss/Tie plot by match')
-    fig, ax = plt.subplots(figsize=figsize)
-    ax.plot(outcomes, c='lightgray', linestyle='--')
-    ax.scatter(np.argwhere(outcomes == 1), outcomes[outcomes == 1], c='tab:green', label='Win')
-    ax.scatter(np.argwhere(outcomes == 0), outcomes[outcomes == 0], c='tab:red', label='Loss')
-    ax.scatter(np.argwhere(outcomes == 0.5), outcomes[outcomes == 0.5], c='tab:blue', label='Tie')
-    ax.hlines(np.mean(outcomes), 0, len(outcomes), color='tab:orange', label='win rate')
-    ax.legend()
-    plot_cols[1].pyplot(fig)
+    plot_cols[1].write(f'#### Win/Loss/Tie plot by match')
+    fig = go.Figure(layout=layout)
+    fig.add_trace(go.Scatter(
+        x=np.arange(1, len(outcomes)+1), y=outcomes,
+        name='scores', line={'color': 'lightgray', 'dash': 'dash'}
+    ))
+    fig.add_trace(go.Scatter(
+        mode='markers',
+        x=np.argwhere(outcomes == 1).flatten()+1, y=outcomes[outcomes == 1],
+        text=hover_text[outcomes == 1],
+        hoverinfo='text',
+        marker_symbol='circle', marker_size=10, marker_color='palegreen',
+        name=f'Win'
+    ))
+    fig.add_trace(go.Scatter(
+        mode='markers',
+        x=np.argwhere(outcomes == 0).flatten()+1, y=outcomes[outcomes == 0],
+        text=hover_text[outcomes == 0],
+        hoverinfo='text',
+        marker_symbol='circle', marker_size=10, marker_color='tomato',
+        name=f'Loss'
+    ))
+    fig.add_trace(go.Scatter(
+        mode='markers',
+        x=np.argwhere(outcomes == 0.5).flatten()+1, y=outcomes[outcomes == 0.5],
+        marker_symbol='circle', marker_size=10, marker_color='deepskyblue',
+        text=hover_text[outcomes == 0.5],
+        hoverinfo='text',
+        name=f'Tie'
+    ))
+    fig.update_layout(
+        showlegend=True,
+        margin=dict(l=0, r=0, b=0, t=0))
+    fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
+    fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor=gray_color_tr)
 
-    plot_cols[1].write('Win rate change by match')
-    fig, ax = plt.subplots(figsize=figsize)
-    ax.plot(range(1, len(outcomes)+1), [sum(outcomes[:n])/n for n in range(1, len(outcomes)+1)], label='win rate')
-    ax.hlines(np.mean(outcomes), 1, len(outcomes), color='tab:orange', label='current win rate')
-    ax.legend()
-    plot_cols[1].pyplot(fig)
+    plot_cols[1].plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+
+
+    plot_cols[0].write('#### Score changes (delta) plot')
+    fig = go.Figure(layout=layout)
+    fig.add_trace(go.Scatter(
+        x=np.arange(1, len(scores_delta)+1), y=scores_delta,
+        showlegend=False
+    ))
+    fig.add_trace(go.Scatter(
+        mode='markers',
+        x=np.argwhere(scores_delta > 0).flatten()+1, y=scores_delta[scores_delta > 0],
+        text=hover_text[scores_delta > 0],
+        hoverinfo='text',
+        marker_symbol='circle', marker_size=10, marker_color='palegreen',
+        name=f'Positive'
+    ))
+    fig.add_trace(go.Scatter(
+        mode='markers',
+        x=np.argwhere(scores_delta < 0).flatten()+1, y=scores_delta[scores_delta < 0],
+        text=hover_text[scores_delta < 0],
+        hoverinfo='text',
+        marker_symbol='circle', marker_size=10, marker_color='tomato',
+        name=f'Negative'
+    ))
+    fig.update_layout(
+        showlegend=True, 
+        margin=dict(l=0, r=0, b=0, t=0))
+    fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
+    fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor='black')
+
+    plot_cols[0].plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+
+
+    plot_cols[1].write('#### Win rate change by match')
+    fig = go.Figure(layout=layout)
+    fig.add_trace(go.Scatter(
+        x=np.arange(1, len(scores_delta)+1), y=[sum(outcomes[:n])/n for n in range(1, len(outcomes)+1)],
+        name='win rate'
+    ))
+    fig.add_trace(go.Scatter(
+        mode='lines',
+        x=[1, len(scores)+1], y=[np.mean(outcomes)] * 2,
+        name=f'current winrate {np.mean(outcomes):.3f}',
+        line={'color':'lightsalmon'}
+    ))
+    fig.update_layout(
+        showlegend=True, 
+        margin=dict(l=0, r=0, b=0, t=0))
+    fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
+    fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor=gray_color_tr)
+
+    plot_cols[1].plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})

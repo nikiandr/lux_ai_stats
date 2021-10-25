@@ -3,3 +3,4 @@ selenium==4.0.0
 beautifulsoup4==4.10.0
 numpy==1.20.1
 matplotlib==3.3.3
+plotly==5.3.1
