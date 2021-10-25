@@ -11,6 +11,20 @@ st.set_page_config(page_title='Lux AI stats',
                        'About': 'Submission statistics for Lux AI competition. Made by Yalikesifulei from Team ♂ GARCH ♂.'
                    })
 
+hide_menu_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer:after {
+            content: 'Submission statistics for Lux AI competition. Made by Yalikesifulei from Team ♂ GARCH ♂.'; 
+            visibility: visible;
+            display: block;
+            position: relative;
+            padding: 5px;
+            top: 2px;
+        }</style>
+        """
+st.markdown(hide_menu_style, unsafe_allow_html=True)
+
 st.title('Lux AI submission statistics')
 col1, col2 = st.columns(2)
 
