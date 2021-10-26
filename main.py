@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objs as go
 import plotly.express as px
-from tools import getSoup, getStats
+from tools import getSoup, getStats, ewma
 
 st.set_page_config(page_title='Lux AI stats', 
                    page_icon='🤖',
@@ -59,7 +59,8 @@ if col2.button('Get stats', key='run'):
         fig = go.Figure(layout=layout)
         fig.add_trace(go.Scatter(
             x=np.arange(1, len(scores)+1), y=scores,
-            name='scores'
+            name='scores',
+            line={'color': '#1f77b4'}
         ))
         fig.add_trace(go.Scatter(
             mode='lines',
@@ -88,7 +89,7 @@ if col2.button('Get stats', key='run'):
             showlegend=True,
             xaxis_title='Match number',
             margin=dict(l=0, r=0, b=0, t=0))
-        fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
+        fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor=gray_color_tr)
         fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr)
 
         plot_cols[0].plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
@@ -98,7 +99,8 @@ if col2.button('Get stats', key='run'):
         fig = go.Figure(layout=layout)
         fig.add_trace(go.Scatter(
             x=np.arange(1, len(outcomes)+1), y=outcomes,
-            name='scores', line={'color': 'lightgray', 'dash': 'dash'}
+            line={'color': 'lightgray', 'dash': 'dash'},
+            showlegend=False
         ))
         fig.add_trace(go.Scatter(
             mode='markers',
@@ -143,7 +145,7 @@ if col2.button('Get stats', key='run'):
             showlegend=True,
             xaxis_title='Match number',
             margin=dict(l=0, r=0, b=0, t=0))
-        fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
+        fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor=gray_color_tr)
         fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor=gray_color_tr)
 
         plot_cols[1].plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
@@ -153,7 +155,8 @@ if col2.button('Get stats', key='run'):
         fig = go.Figure(layout=layout)
         fig.add_trace(go.Scatter(
             x=np.arange(1, len(scores_delta)+1), y=scores_delta,
-            showlegend=False
+            showlegend=False,
+            line={'color': '#1f77b4'}
         ))
         fig.add_trace(go.Scatter(
             mode='markers',
@@ -185,29 +188,67 @@ if col2.button('Get stats', key='run'):
             showlegend=True, 
             xaxis_title='Match number',
             margin=dict(l=0, r=0, b=0, t=0))
-        fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
+        fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor=gray_color_tr)
         fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor='black')
 
         plot_cols[0].plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
 
         plot_cols[1].write('#### Win rate change by match')
+        alpha_values = np.linspace(0.0, 0.1, 21)[1:]
         fig = go.Figure(layout=layout)
+        wr_change = [sum(outcomes[:n])/n for n in range(1, len(outcomes)+1)]
+
+        for alpha in alpha_values:
+            fig.add_trace(go.Scatter(
+                visible=False,
+                name=f'win rate EMA',
+                x=np.arange(1, len(outcomes)+1),
+                y=ewma(wr_change, alpha=alpha),
+                line={'color': '#2ca02c'}
+            ))
+        fig.data[len(alpha_values)//2 - 1].visible = True
+
         fig.add_trace(go.Scatter(
-            x=np.arange(1, len(scores_delta)+1), y=[sum(outcomes[:n])/n for n in range(1, len(outcomes)+1)],
-            name='win rate'
+            x=np.arange(1, len(scores_delta)+1), y=wr_change,
+            name='win rate',
+            line={'color': '#1f77b4'}
         ))
+        fig.data[-1].visible = True
+
         fig.add_trace(go.Scatter(
             mode='lines',
             x=[1, len(scores)+1], y=[np.mean(outcomes)] * 2,
             name=f'current winrate',
             line={'color':'lightsalmon'}
         ))
+        fig.data[-1].visible = True
+
+        steps = []
+        for ind, alpha in enumerate(alpha_values):
+            step = {
+                'method': 'update',
+                'args': [{'visible': [False]*len(fig.data)}],
+                'label': f'{alpha}'
+            }
+            step['args'][0]['visible'][ind] = True
+            step['args'][0]['visible'][-1] = True
+            step['args'][0]['visible'][-2] = True
+            steps.append(step)
+
+        sliders = [dict(
+            active=len(alpha_values)//2 - 1,
+            steps=steps,
+            currentvalue={'prefix': 'Smoothing α = '},
+            pad={'b': 3, 't': 40}
+        )]
+
         fig.update_layout(
             showlegend=True,
             xaxis_title='Match number',
-            margin=dict(l=0, r=0, b=0, t=0))
-        fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, range=(1, len(scores)+1))
-        fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor=gray_color_tr)
+            margin=dict(l=0, r=0, b=10, t=0),
+            sliders=sliders)
+        fig.update_xaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor=gray_color_tr)
+        fig.update_yaxes(showline=True, linecolor=gray_color, gridcolor=gray_color_tr, zerolinecolor=gray_color_tr, range=(min(wr_change)-0.005, 1.005))
 
         plot_cols[1].plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
