@@ -9,9 +9,11 @@ def getSoup(sub_id):
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument("--disable-gpu")
     browser = webdriver.Chrome(options=options)
 
-    URL = 'https://www.kaggle.com/c/lux-ai-2021/submissions?dialog=episodes-submission-'
+    # URL = 'https://www.kaggle.com/c/lux-ai-2021/submissions?dialog=episodes-submission-'
+    URL = 'https://www.kaggle.com/competitions/lux-ai-season-2/leaderboard?dialog=episodes-submission-'
 
     print('Loading submission page...')
     browser.get(URL + str(sub_id))
@@ -38,10 +40,19 @@ def getStats(soup):
     scores = []
     scores_delta = []
     hover_text = []
+    links = []
     
     text_select = []
     team_names = []
     
+    # for a in soup.select('a[class*="sc-"]'):
+    #     try:
+    #         link = a['href']
+    #         if 'submissions?dialog' in link:
+    #             links.append('<a href="https://www.kaggle.com/'+link+'"></a>')
+    #     except KeyError:
+    #         pass
+
     for span in soup.select('span[class*="sc-"]'):
         text = span.get_text()
         if 'vs' in text and '[' in text and 'ago' not in text:
@@ -54,13 +65,15 @@ def getStats(soup):
     team_name = max(set(team_names), key=team_names.count)
     
     for text in text_select:
-        if 'Validation' not in text:
-            hover_text.append(text.replace(' vs ', '<br>'))
+        # print(text)
+        # if 'Validation' not in text and 'Err' not in text:
+        #     hover_text.append(text.replace(' vs ', '<br>'))
         for part in text.split(' vs '):
             if team_name in part:
                 result = part.split(' ')
                 delta = result[-1].strip('()+')
-                if delta != 'Validation':
+                if delta != 'Validation' and delta != '-NaN':
+                    hover_text.append(text.replace(' vs ', '<br>'))
                     scores.append(int(result[-2]))
                     scores_delta.append(int(delta))
                     outcome = result[0].strip('[]')
@@ -71,13 +84,15 @@ def getStats(soup):
                     else: # Tie
                         outcomes.append(0.5)
     
+
     scores.insert(0, scores[0] + scores_delta[0])
     scores = np.array(scores[::-1])
     outcomes = np.array(outcomes[::-1])
     scores_delta = np.array(scores_delta[::-1])
     hover_text = np.array(hover_text[::-1])
+    # links = np.array(links[::-1])[1:]
 
-    return team_name, scores, outcomes, scores_delta, hover_text
+    return team_name, scores, outcomes, scores_delta, hover_text #, links
 
 
 def ewma(x, alpha=None):

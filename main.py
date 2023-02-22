@@ -28,7 +28,7 @@ st.markdown(hide_menu_style, unsafe_allow_html=True)
 st.title('Lux AI submission statistics')
 col1, col2 = st.columns(2)
 
-sub_id = col1.number_input('Submission ID', value=23032370, step=1, key='sub_id')
+sub_id = col1.number_input('Submission ID', value=30131764, step=1, key='sub_id')
 
 if col2.button('Get stats', key='run'):
     with st.spinner('Wait for it...'):
@@ -36,7 +36,8 @@ if col2.button('Get stats', key='run'):
             soup = getSoup(sub_id)
             team_name, scores, outcomes, scores_delta, hover_text = getStats(soup)
             is_ok = True
-        except ValueError:
+        except ValueError as e:
+            print(e)
             is_ok = False
             st.error('**Error:** wrong submission ID!')
 
