@@ -1,5 +1,5 @@
 # Lux AI Submission Statistics
-Source code for the web app that visualizes some [Lux AI]() submissions played games statistics: score growth and change, win rate change and win/loss matches count.
+Source code for the web app that visualizes some [Lux AI](https://www.kaggle.com/competitions/lux-ai-season-2) submissions played games statistics: score growth and change, win rate change and win/loss matches count.
 
 Stack: Selenium & Beautiful Soup for scraping data from the Kaggle submission's page and Streamlit & Plotly for the interface and making plots. 
 
