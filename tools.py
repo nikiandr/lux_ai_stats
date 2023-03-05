@@ -27,7 +27,7 @@ class TeamStats:
 
     @property
     def winrate(self):
-        return np.mean(self.outcomes)
+        return np.mean(self.outcomes == 1)
 
     def plot_score_growth(self):
         fig = go.Figure(layout=layout)
