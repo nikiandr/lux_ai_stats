@@ -1,5 +1,21 @@
 import streamlit as st
-from tools import get_soup, get_stats, escape_markdown
+
+from tools import escape_markdown, get_soup, get_stats
+
+HIDE_MENU_STYLE = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer:after {
+        content: 'Submission statistics for Lux AI competition. Made by Team ♂ GARCH ♂.';
+        visibility: visible;
+        display: block;
+        position: relative;
+        padding: 0px;
+        top: 2px;
+    }</style>
+"""
+DEFAULT_SUB_ID = 30131764
+
 
 def display_stats(sub_id):
     with st.spinner("Wait for it..."):
@@ -35,22 +51,6 @@ def display_stats(sub_id):
         plot_cols[1].write("#### Win rate change by match")
         fig = stats.plot_winrate_change()
         plot_cols[1].plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
-
-
-
-HIDE_MENU_STYLE = """
-    <style>
-    #MainMenu {visibility: hidden;}
-    footer:after {
-        content: 'Submission statistics for Lux AI competition. Made by Team ♂ GARCH ♂.';
-        visibility: visible;
-        display: block;
-        position: relative;
-        padding: 0px;
-        top: 2px;
-    }</style>
-"""
-DEFAULT_SUB_ID = 30131764
 
 
 if __name__ == "__main__":
