@@ -55,7 +55,8 @@ DEFAULT_SUB_ID = 30131764
 
 if __name__ == "__main__":
     query_params = st.experimental_get_query_params()
-    url_had_id = "id" in query_params.keys()
+    if "run_immediately" not in st.session_state:
+        st.session_state["run_immediately"] = "id" in query_params.keys()
 
     st.set_page_config(
         page_title="Lux AI stats",
@@ -68,8 +69,9 @@ if __name__ == "__main__":
     st.title("Lux AI submission statistics")
     col1, col2 = st.columns(2)
 
-    sub_id = col1.number_input("Submission ID", value=int(query_params.get("id", [DEFAULT_SUB_ID])[0]), step=1, key="sub_id")
-    st.experimental_set_query_params(**{"id": str(sub_id)})
+    sub_id = col1.text_input("Submission ID", value=int(query_params.get("id", [DEFAULT_SUB_ID])[0]), key="sub_id")
 
-    if col2.button("Get stats", key="run") or url_had_id:
-            display_stats(sub_id)
+    if col2.button("Get stats", key="run") or st.session_state.get("run_immediately"):
+        st.experimental_set_query_params(**{"id": str(sub_id)})
+        display_stats(sub_id)
+        st.session_state["run_immediately"] = False
