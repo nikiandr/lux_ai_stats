@@ -18,6 +18,8 @@ HIDE_MENU_STYLE = """
 
 
 if __name__ == "__main__":
+    query_params = st.experimental_get_query_params()
+
     st.set_page_config(
         page_title="Lux AI stats",
         page_icon="🤖",
@@ -29,7 +31,8 @@ if __name__ == "__main__":
     st.title("Lux AI submission statistics")
     col1, col2 = st.columns(2)
 
-    sub_id = col1.number_input("Submission ID", value=30131764, step=1, key="sub_id")
+    sub_id = col1.number_input("Submission ID", value=int(query_params['id'][0]), step=1, key="sub_id")
+    st.experimental_set_query_params(**{'id': str(sub_id)})
 
     if col2.button("Get stats", key="run"):
         with st.spinner("Wait for it..."):
