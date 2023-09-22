@@ -14,13 +14,14 @@ HIDE_MENU_STYLE = """
         top: 2px;
     }</style>
 """
-DEFAULT_SUB_ID = 30131764
+DEFAULT_SUB_ID = 33605309
+DEFAULT_COMPETITION_URL = "https://www.kaggle.com/competitions/lux-ai-season-2-neurips-stage-2"
 
 
 def display_stats(sub_id):
     with st.spinner("Wait for it..."):
         try:
-            soup = get_soup(sub_id)
+            soup = get_soup(DEFAULT_COMPETITION_URL, sub_id)
             stats = get_stats(soup)
             is_ok = True
         except ValueError as e:

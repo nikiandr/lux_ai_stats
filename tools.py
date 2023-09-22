@@ -7,7 +7,6 @@ import plotly.graph_objs as go
 from bs4 import BeautifulSoup
 from selenium import webdriver
 
-
 layout = go.Layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
 gray_color = "rgba(49,51,63,1)"
 gray_color_tr = "rgba(49,51,63,0.5)"
@@ -190,7 +189,7 @@ class TeamStats:
         return fig
 
 
-def get_soup(sub_id):
+def get_soup(competition_url, sub_id):
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
@@ -198,7 +197,7 @@ def get_soup(sub_id):
     options.add_argument("--disable-gpu")
     browser = webdriver.Chrome(options=options)
 
-    URL = "https://www.kaggle.com/competitions/lux-ai-season-2/leaderboard?dialog=episodes-submission-"
+    URL = f"{competition_url}/leaderboard?dialog=episodes-submission-"
 
     print("Loading submission page...")
     browser.get(URL + str(sub_id))
